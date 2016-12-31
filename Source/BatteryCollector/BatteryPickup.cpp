@@ -11,6 +11,8 @@ ABatteryPickup::ABatteryPickup()
 // Called when the game starts or when spawned
 void ABatteryPickup::BeginPlay()
 {
+	Super::BeginPlay();
+
 	GetMeshComponent()->SetSimulatePhysics(true);
 }
 
