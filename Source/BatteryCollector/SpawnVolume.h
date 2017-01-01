@@ -25,10 +25,15 @@ public:
 		return WhereToSpawn;
 	}
 
+	UFUNCTION(BlueprintCallable, Category = "Spawning")
 	FVector GetRandomSpawnPoint() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Spawning")
+	void SetSpawningEnabled(bool ShouldSpawn);
 
 private:
 	void StartNextSpawnTimer();
+	void CancelNextSpawnTimer();
 	void SpawnPickup();
 
 

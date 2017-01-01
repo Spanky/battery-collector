@@ -60,3 +60,26 @@ void ASpawnVolume::SpawnPickup()
 		}
 	}
 }
+
+void ASpawnVolume::SetSpawningEnabled(bool ShouldSpawn)
+{
+	if(ShouldSpawn)
+	{
+		if(!SpawnTimer.IsValid())
+		{
+			StartNextSpawnTimer();
+		}
+	}
+	else
+	{
+		if (SpawnTimer.IsValid())
+		{
+			CancelNextSpawnTimer();
+		}
+	}
+}
+
+void ASpawnVolume::CancelNextSpawnTimer()
+{
+	GetWorldTimerManager().ClearTimer(SpawnTimer);
+}
