@@ -4,6 +4,7 @@
 #include "BatteryCollectorGameMode.h"
 #include "BatteryCollectorCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blueprint/UserWidget.h"
 
 ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 {
@@ -24,8 +25,41 @@ void ABatteryCollectorGameMode::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	ABatteryCollectorCharacter* MyCharacter = Cast<ABatteryCollectorCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
-	if(MyCharacter && MyCharacter->GetCurrentPower() > 0.0f)
+	if(MyCharacter)
 	{
-		MyCharacter->UpdatePower(-PlayerPowerDecayRate * DeltaSeconds * MyCharacter->GetInitialPower());
+		if(MyCharacter->GetCurrentPower() >= PowerRequiredToWin)
+		{
+			SetCurrentPlayState(BatteryPlayState::Won);
+		}
+		else if(MyCharacter->GetCurrentPower() > 0.0f)
+		{
+			MyCharacter->UpdatePower(-PlayerPowerDecayRate * DeltaSeconds * MyCharacter->GetInitialPower());
+		}
+		else
+		{
+			SetCurrentPlayState(BatteryPlayState::GameOver);
+		}
+	}
+}
+
+void ABatteryCollectorGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	SetCurrentPlayState(BatteryPlayState::Playing);
+
+	ABatteryCollectorCharacter* MyCharacter = Cast<ABatteryCollectorCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+	if(MyCharacter)
+	{
+		PowerRequiredToWin = MyCharacter->GetInitialPower() * 1.25f;
+	}
+
+	if (HUDWidgetClass)
+	{
+		CurrentWidget = CreateWidget<UUserWidget>(GetWorld(), HUDWidgetClass);
+		if (CurrentWidget)
+		{
+			CurrentWidget->AddToViewport();
+		}
 	}
 }
