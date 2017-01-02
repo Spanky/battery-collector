@@ -3,6 +3,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "BatteryCollectorGameMode.generated.h"
 
+class ASpawnVolume;
 class UUserWidget;
 
 UENUM(BlueprintType)
@@ -11,7 +12,7 @@ enum class BatteryPlayState
 	Playing,
 	GameOver,
 	Won,
-	Uknown
+	Unknown
 };
 
 UCLASS(minimalapi)
@@ -35,7 +36,16 @@ public:
 	BatteryPlayState GetCurrentPlayState() const { return CurrentPlayState; }
 
 	UFUNCTION(BlueprintCallable, Category = "Power", meta = (BlueprintProtected = "true"))
-	void SetCurrentPlayState(BatteryPlayState NewState) { CurrentPlayState = NewState; }
+	void SetCurrentPlayState(BatteryPlayState NewState);
+
+private:
+	void HandleNewState(BatteryPlayState NewState);
+
+	void ActivateSpawnVolumes();
+	void DeactivateSpawnVolumes();
+
+	void RagdollCharacter();
+	void DisablePlayerInput();
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected = "true"))
@@ -51,7 +61,6 @@ protected:
 
 private:
 	BatteryPlayState CurrentPlayState;
+
+	TArray<ASpawnVolume*> SpawnVolumeActors;
 };
-
-
-

@@ -5,6 +5,7 @@
 #include "BatteryCollectorCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
+#include "SpawnVolume.h"
 
 ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 {
@@ -46,7 +47,12 @@ void ABatteryCollectorGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetCurrentPlayState(BatteryPlayState::Playing);
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnVolume::StaticClass(), FoundActors);
+	for (AActor* currentActor : FoundActors)
+	{
+		SpawnVolumeActors.Add(CastChecked<ASpawnVolume>(currentActor));
+	}
 
 	ABatteryCollectorCharacter* MyCharacter = Cast<ABatteryCollectorCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 	if(MyCharacter)
@@ -61,5 +67,69 @@ void ABatteryCollectorGameMode::BeginPlay()
 		{
 			CurrentWidget->AddToViewport();
 		}
+	}
+
+	SetCurrentPlayState(BatteryPlayState::Playing);
+}
+
+void ABatteryCollectorGameMode::SetCurrentPlayState(BatteryPlayState NewState)
+{
+	CurrentPlayState = NewState;
+	HandleNewState(CurrentPlayState);
+}
+
+void ABatteryCollectorGameMode::HandleNewState(BatteryPlayState NewState)
+{
+	switch(NewState)
+	{
+	case BatteryPlayState::Playing:
+		ActivateSpawnVolumes();
+		break;
+	case BatteryPlayState::Won:
+		DeactivateSpawnVolumes();
+		break;
+	case BatteryPlayState::GameOver:
+		DeactivateSpawnVolumes();
+		DisablePlayerInput();
+		RagdollCharacter();
+		break;
+	case BatteryPlayState::Unknown:
+		UE_LOG(LogTemp, Error, TEXT("Play state is 'Unknown'"));
+		break;
+	}
+}
+
+void ABatteryCollectorGameMode::ActivateSpawnVolumes()
+{
+	for(ASpawnVolume* currentSpawnVolume : SpawnVolumeActors)
+	{
+		currentSpawnVolume->SetSpawningEnabled(true);
+	}
+}
+
+void ABatteryCollectorGameMode::DeactivateSpawnVolumes()
+{
+	for (ASpawnVolume* currentSpawnVolume : SpawnVolumeActors)
+	{
+		currentSpawnVolume->SetSpawningEnabled(false);
+	}
+}
+
+void ABatteryCollectorGameMode::RagdollCharacter()
+{
+	ABatteryCollectorCharacter* MyCharacter = Cast<ABatteryCollectorCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+	if(MyCharacter)
+	{
+		MyCharacter->GetMesh()->SetSimulatePhysics(true);
+		MyCharacter->GetMovementComponent()->MovementState.bCanJump = false;
+	}
+}
+
+void ABatteryCollectorGameMode::DisablePlayerInput()
+{
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	if(PlayerController)
+	{
+		PlayerController->SetCinematicMode(true, false, false, true, true);
 	}
 }
